@@ -344,10 +344,13 @@ def build_handler(svc):
                     candidates.append(extra)
 
             for variant in candidates:
-                status, resp = svc.verify_card(variant, APP_ID, uuid)
+                record = self.lookup_card(variant)
+                # 已在卡上绑定过 app_id 的，沿用它；新卡才用配置值
+                use_app_id = (record or {}).get("app_id") or APP_ID
+                status, resp = svc.verify_card(variant, use_app_id, uuid)
                 if resp.get("status") == "success":
                     expire_iso = (resp.get("data") or {}).get("expire_time", "")
-                    card_type = self.lookup_type(variant)
+                    card_type = (record or {}).get("card_type", "")
                     token = self.issue(variant, expire_iso,
                                        CARD_TYPE_TEXT.get(card_type, "会员"), uuid)
                     print("[card/active] 通过：%r 到期 %s" % (variant, expire_iso))
@@ -360,14 +363,20 @@ def build_handler(svc):
             print("[card/active] 拒绝：%s" % last_msg)
             return self._json(self.fail(last_msg))
 
-        def lookup_type(self, code):
+        def lookup_card(self, code):
+            """查卡记录：返回 card_type / app_id / status，查不到返回 None。
+
+            app_id 必须以卡上记录的为准 —— 生产库里同一套卡可能分布在多个
+            app_id 下（不同客户端各自注册），固定用配置值会把它们判成"绑定其他设备"。
+            """
             try:
                 with svc.LOCK, svc.db() as conn:
-                    row = conn.execute("SELECT card_type FROM cards WHERE card_hash=?",
-                                       (svc.digest(code),)).fetchone()
-                return row["card_type"] if row else ""
+                    row = conn.execute(
+                        "SELECT card_type, app_id, status FROM cards WHERE card_hash=?",
+                        (svc.digest(code),)).fetchone()
+                return dict(row) if row else None
             except Exception:
-                return ""
+                return None
 
         def issue(self, code, expire_iso, summary, uuid):
             token = secrets.token_urlsafe(36)

@@ -1,0 +1,9 @@
+.env
+.env.local
+*.sqlite3
+*.sqlite3-journal
+node_modules/
+__pycache__/
+.venv/
+data/
+update-packages/

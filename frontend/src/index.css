@@ -1,0 +1,426 @@
+@import "tailwindcss";
+@import "@heroui/styles";
+
+@source "../index.html";
+@source "./**/*.{ts,tsx}";
+
+/* ------------------------------------------------------------------
+   Apple 玻璃风主题：HeroUI 语义 token 直接改成半透明磨砂面，
+   这样 HeroUI 自带组件（Card / Modal / Select / Table）天然就是玻璃。
+   ------------------------------------------------------------------ */
+
+@font-face {
+  font-family: "Spline Sans Mono";
+  src: url("/fonts/spline-sans-mono-var.woff2") format("woff2-variations");
+  font-weight: 300 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root,
+[data-theme='light'] {
+  --radius: 1rem;
+
+  --background: oklch(0.965 0.008 255);
+  --foreground: oklch(0.21 0.021 265);
+
+  --surface: oklch(1 0 0 / 0.62);
+  --surface-foreground: var(--foreground);
+  --surface-secondary: oklch(1 0 0 / 0.46);
+  --surface-secondary-foreground: var(--foreground);
+  --surface-tertiary: oklch(1 0 0 / 0.34);
+  --surface-tertiary-foreground: var(--foreground);
+
+  --overlay: oklch(1 0 0 / 0.74);
+  --overlay-foreground: var(--foreground);
+  --backdrop: rgba(16 22 34 / 0.34);
+
+  --default: oklch(0.21 0.021 265 / 0.07);
+  --default-foreground: var(--foreground);
+
+  --field-background: oklch(1 0 0 / 0.58);
+  --field-foreground: var(--foreground);
+  --field-placeholder: oklch(0.55 0.015 265);
+  --field-border: oklch(1 0 0 / 0.7);
+
+  --muted: oklch(0.55 0.016 265);
+  --border: oklch(0.18 0.02 265 / 0.13);
+  --separator: oklch(0.18 0.02 265 / 0.10);
+
+  --accent: oklch(0.62 0.19 254);
+  --accent-foreground: oklch(0.99 0 0);
+  --success: oklch(0.68 0.17 152);
+  --success-foreground: oklch(0.99 0 0);
+  --warning: oklch(0.79 0.15 78);
+  --warning-foreground: oklch(0.21 0.021 265);
+  --danger: oklch(0.62 0.2 25);
+  --danger-foreground: oklch(0.99 0 0);
+
+  --glass-bg: oklch(1 0 0 / 0.55);
+  --glass-bg-strong: oklch(1 0 0 / 0.72);
+  --glass-border: oklch(1 0 0 / 0.7);
+  --glass-hairline: oklch(1 0 0 / 0.85);
+  --glass-shadow:
+    0 1px 1px oklch(0.2 0.03 265 / 0.04),
+    0 8px 24px -8px oklch(0.2 0.03 265 / 0.18),
+    0 24px 60px -24px oklch(0.2 0.03 265 / 0.22);
+  --glass-tile: oklch(0.21 0.021 265 / 0.06);
+  --glass-tile-hover: oklch(0.21 0.021 265 / 0.10);
+
+  --orb-1: oklch(0.72 0.18 250 / 0.55);
+  --orb-2: oklch(0.78 0.16 330 / 0.42);
+  --orb-3: oklch(0.82 0.14 200 / 0.45);
+  --orb-4: oklch(0.84 0.15 95 / 0.34);
+}
+
+[data-theme='dark'] {
+  --background: oklch(0.165 0.021 265);
+  --foreground: oklch(0.97 0.004 265);
+
+  --surface: oklch(1 0 0 / 0.072);
+  --surface-foreground: var(--foreground);
+  --surface-secondary: oklch(1 0 0 / 0.055);
+  --surface-secondary-foreground: var(--foreground);
+  --surface-tertiary: oklch(1 0 0 / 0.04);
+  --surface-tertiary-foreground: var(--foreground);
+
+  --overlay: oklch(0.235 0.016 265 / 0.78);
+  --overlay-foreground: var(--foreground);
+  --backdrop: rgba(6 9 16 / 0.5);
+
+  --default: oklch(1 0 0 / 0.1);
+  --default-foreground: var(--foreground);
+
+  --field-background: oklch(1 0 0 / 0.08);
+  --field-foreground: var(--foreground);
+  --field-placeholder: oklch(0.7 0.015 265);
+  --field-border: oklch(1 0 0 / 0.12);
+
+  --muted: oklch(0.71 0.015 265);
+  --border: oklch(1 0 0 / 0.13);
+  --separator: oklch(1 0 0 / 0.1);
+
+  --glass-bg: oklch(1 0 0 / 0.065);
+  --glass-bg-strong: oklch(0.22 0.016 265 / 0.72);
+  --glass-border: oklch(1 0 0 / 0.12);
+  --glass-hairline: oklch(1 0 0 / 0.18);
+  --glass-shadow:
+    0 1px 1px oklch(0 0 0 / 0.3),
+    0 10px 30px -12px oklch(0 0 0 / 0.6),
+    0 30px 70px -30px oklch(0 0 0 / 0.7);
+  --glass-tile: oklch(1 0 0 / 0.05);
+  --glass-tile-hover: oklch(1 0 0 / 0.1);
+
+  --orb-1: oklch(0.55 0.24 265 / 0.55);
+  --orb-2: oklch(0.58 0.22 330 / 0.45);
+  --orb-3: oklch(0.6 0.18 200 / 0.4);
+  --orb-4: oklch(0.62 0.2 95 / 0.22);
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  html {
+    font-family:
+      -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI Variable",
+      "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC",
+      sans-serif;
+    font-synthesis-weight: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    overscroll-behavior-y: none;
+  }
+
+  ::selection {
+    background: oklch(0.62 0.19 254 / 0.24);
+  }
+
+  :where(input, textarea, select) {
+    caret-color: var(--accent);
+  }
+
+  input[type='number']::-webkit-outer-spin-button,
+  input[type='number']::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type='number'] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: oklch(0.5 0.02 265 / 0.32);
+    border-radius: 9999px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: oklch(0.5 0.02 265 / 0.5);
+    background-clip: content-box;
+  }
+
+  .mono {
+    font-family: "Spline Sans Mono", ui-monospace, SFMono-Regular, Consolas, monospace;
+    font-variant-ligatures: none;
+  }
+}
+
+@layer components {
+  /* 玻璃底衬：整屏的极光背景，给磨砂面提供可被模糊的内容 */
+  .aurora {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    background: var(--background);
+    pointer-events: none;
+  }
+
+  .aurora__orb {
+    position: absolute;
+    border-radius: 9999px;
+    filter: blur(80px);
+    will-change: transform;
+  }
+
+  .aurora__orb--1 {
+    width: 46rem;
+    height: 46rem;
+    top: -18rem;
+    left: -12rem;
+    background: var(--orb-1);
+  }
+
+  .aurora__orb--2 {
+    width: 38rem;
+    height: 38rem;
+    top: -10rem;
+    right: -10rem;
+    background: var(--orb-2);
+  }
+
+  .aurora__orb--3 {
+    width: 42rem;
+    height: 42rem;
+    bottom: -20rem;
+    left: 22%;
+    background: var(--orb-3);
+  }
+
+  .aurora__orb--4 {
+    width: 30rem;
+    height: 30rem;
+    bottom: -12rem;
+    right: 4%;
+    background: var(--orb-4);
+  }
+
+  /* 玻璃面板：壳层与浮层用 */
+  .glass {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    box-shadow: var(--glass-shadow);
+  }
+
+  .glass-strong {
+    background: var(--glass-bg-strong);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(36px) saturate(190%);
+    -webkit-backdrop-filter: blur(36px) saturate(190%);
+    box-shadow: var(--glass-shadow);
+  }
+
+  /* 顶部内高光：苹果玻璃标志性的一道边 */
+  .glass-hairline {
+    position: relative;
+  }
+  .glass-hairline::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(
+      180deg,
+      var(--glass-hairline) 0%,
+      transparent 42%,
+      transparent 100%
+    );
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  /* 导航药丸 */
+  .nav-tile {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    border-radius: 0.875rem;
+    padding: 0.55rem 0.7rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--foreground);
+    transition:
+      background-color 0.18s ease,
+      transform 0.18s ease;
+  }
+  .nav-tile:hover {
+    background: var(--glass-tile-hover);
+  }
+  .nav-tile[data-active='true'] {
+    background: var(--glass-tile);
+    box-shadow:
+      inset 0 1px 0 0 var(--glass-hairline),
+      0 1px 2px oklch(0.2 0.03 265 / 0.12);
+  }
+
+  .nav-tile__glyph {
+    display: grid;
+    place-items: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 0.6rem;
+    background: var(--glass-tile);
+    transition: background-color 0.18s ease;
+  }
+  .nav-tile[data-active='true'] .nav-tile__glyph {
+    background: var(--accent);
+    color: var(--accent-foreground);
+    box-shadow: 0 4px 12px -4px oklch(0.62 0.19 254 / 0.7);
+  }
+
+  /* 移动端底部标签栏的单项 */
+  .tab-item {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.15rem;
+    border-radius: 0.9rem;
+    padding: 0.35rem 0.25rem;
+    font-size: 0.625rem;
+    font-weight: 500;
+    color: var(--muted);
+    transition: color 0.18s ease;
+  }
+  .tab-item[data-active='true'] {
+    color: var(--accent);
+  }
+
+  /* 卡种印色：保留月/半年/年的票面语义 */
+  .tick {
+    display: inline-block;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 9999px;
+    background: var(--band-color, currentColor);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--band-color, currentColor) 22%, transparent);
+  }
+  .band-month { --band-color: oklch(0.62 0.2 25); }
+  .band-half { --band-color: oklch(0.62 0.19 254); }
+  .band-year { --band-color: oklch(0.66 0.16 152); }
+
+  .dimmed {
+    opacity: 0.55;
+  }
+}
+
+@layer utilities {
+  .animate-rise {
+    animation: rise 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .animate-fade {
+    animation: fade 0.24s ease-out both;
+  }
+
+  /* 卡密等需要长按选中的文本：手机端关闭系统默认的“不可选”行为 */
+  .copyable {
+    -webkit-user-select: text;
+    user-select: text;
+    -webkit-touch-callout: default;
+    cursor: text;
+    word-break: break-all;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Sonner 通知：贴在玻璃上的小胶囊 */
+[data-sonner-toast] {
+  font-family: inherit !important;
+  background: var(--glass-bg-strong) !important;
+  color: var(--foreground) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-radius: 1rem !important;
+  backdrop-filter: blur(30px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(30px) saturate(180%) !important;
+  box-shadow: var(--glass-shadow) !important;
+}
+[data-sonner-toast] [data-description] {
+  color: var(--muted) !important;
+}

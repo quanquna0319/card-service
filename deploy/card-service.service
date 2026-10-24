@@ -1,0 +1,16 @@
+[Unit]
+Description=Local Card Service WebUI
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/card-service
+EnvironmentFile=/etc/card-service.env
+ExecStart=/usr/bin/python3 /opt/card-service/server.py
+# 网页里的重启会以退出码 0 结束进程，always 才能把它重新拉起
+Restart=always
+RestartSec=3
+User=root
+
+[Install]
+WantedBy=multi-user.target

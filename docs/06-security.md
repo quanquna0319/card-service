@@ -60,14 +60,14 @@
 
 #### R3 · 在线更新构成完整供应链攻击面
 
-**事实**：`download` 模式从 `CARD_UPDATE_REPO`（默认 `heijiji0527/card-service`）拉取 `master` 分支源码包，解压后直接由容器执行，**无签名校验、无哈希固定**。
+**事实**：`download` 模式从 `CARD_UPDATE_REPO`（默认 `quanquna0319/card-service`）拉取 `main` 分支源码包，解压后直接由容器执行，**无签名校验、无哈希固定**。
 
 **影响**：
 - 上游仓库被入侵 / 分支被强推 → 服务器执行任意代码；
 - `CARD_UPDATE_REPO` 环境变量可被改指向攻击者仓库；
 - 若配置了 `GITHUB_TOKEN`，其权限范围也需评估（应为只读）。
 
-**缓解现状**：只用 `master` 最新提交、留存源码包可回看、Git 模式下只允许快进。
+**缓解现状**：只用 `main` 最新提交、留存源码包可回看、Git 模式下只允许快进。
 **修复**：固定到具体 commit/tag 而非分支；对源码包做 SHA256 白名单校验；更新前强制自动备份；`GITHUB_TOKEN` 使用仅 `public_repo` 只读最小权限。
 
 ### 3.2 中危

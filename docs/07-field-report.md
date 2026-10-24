@@ -110,6 +110,11 @@
 }
 ```
 
+> 📌 **变更说明（2026-10-24 更新）**
+> 上表为采集时的原值：该实例当时从上游 `heijiji0527/card-service` 的 `master` 分支更新。
+> 此后更新源已更正为 **`quanquna0319/card-service` 的 `main` 分支**（见 `docker-compose.yml` 的 `CARD_UPDATE_REPO` / `CARD_UPDATE_BRANCH`）。
+> 因此 `dc22c37` 这个提交在新仓库中不存在，切换后首次「检查更新」会显示远端有新提交，属预期行为。
+
 **关键发现：这个实例是 download 模式更新的产物，而非纯镜像运行。**
 
 证据链：

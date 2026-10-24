@@ -1,7 +1,8 @@
 # 01 · 项目概览
 
 > 版本基线：**v1.1.2**（`CHANGELOG.md` 记录日期 2026-10-19）
-> 上游仓库：`heijiji0527/card-service`
+> 更新源（`CARD_UPDATE_REPO`）：`quanquna0319/card-service` · 分支 `main`
+> 原始来源：`heijiji0527/card-service`（本仓库为其后续维护版本）
 
 ## 1. 这是什么
 

@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: ghcr.io/heijiji0527/card-service:latest
+    image: ghcr.io/quanquna0319/card-service:latest
     container_name: card-service
     restart: unless-stopped
     ports:
@@ -16,6 +16,9 @@ services:
       CARD_HOST: "0.0.0.0"
       CARD_PORT: "8080"
       CARD_DB: "/data/cards.sqlite3"
+      # 在线更新源：显式注入，避免依赖镜像内的默认值
+      CARD_UPDATE_REPO: "${CARD_UPDATE_REPO:-quanquna0319/card-service}"
+      CARD_UPDATE_BRANCH: "${CARD_UPDATE_BRANCH:-main}"
       TZ: "${TZ:-Asia/Shanghai}"
     volumes:
       - ./data:/data

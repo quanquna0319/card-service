@@ -45,8 +45,8 @@ SERVER_PID = os.getpid()
 GIT_REMOTE = os.environ.get("CARD_GIT_REMOTE", "origin")
 UPDATE_COMMAND = os.environ.get("CARD_UPDATE_COMMAND", "").strip()
 UPDATE_MODE = os.environ.get("CARD_UPDATE_MODE", "auto").strip().lower()
-UPDATE_REPO = os.environ.get("CARD_UPDATE_REPO", "heijiji0527/card-service").strip()
-UPDATE_BRANCH = os.environ.get("CARD_UPDATE_BRANCH", "master").strip()
+UPDATE_REPO = os.environ.get("CARD_UPDATE_REPO", "quanquna0319/card-service").strip()
+UPDATE_BRANCH = os.environ.get("CARD_UPDATE_BRANCH", "main").strip()
 UPDATE_DIR = Path(os.environ.get("CARD_UPDATE_DIR", str(DB_PATH.parent)))
 INSTALL_DIR = Path(os.environ.get("CARD_UPDATE_INSTALL_DIR", str(ROOT)))
 UPDATE_ORIGIN = os.environ.get("CARD_UPDATE_ORIGIN", "https://api.github.com").rstrip("/")
@@ -648,7 +648,7 @@ def check_update() -> dict:
 def download_update() -> dict:
     """没有 Git 时直接下载源码压缩包，覆盖程序文件后重启即可生效。"""
     if not UPDATE_REPO or "/" not in UPDATE_REPO:
-        raise ValueError("CARD_UPDATE_REPO 需要填写 owner/repo，例如 heijiji0527/card-service")
+        raise ValueError("CARD_UPDATE_REPO 需要填写 owner/repo，例如 quanquna0319/card-service")
     target = remote_commit()
     local = installed_commit()
     state = read_update_state()

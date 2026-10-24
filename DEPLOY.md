@@ -44,18 +44,18 @@ docker run -d --name card-service \
 
 ### 三）GitHub Actions 构建并推送 GHCR
 
-推送到 `master` 或打 `v*` 标签后，`.github/workflows/build-image.yml` 会构建 `linux/amd64` 与 `linux/arm64` 两个架构的镜像并推送到：
+推送到 `main` 或打 `v*` 标签后，`.github/workflows/build-image.yml` 会构建 `linux/amd64` 与 `linux/arm64` 两个架构的镜像并推送到：
 
 ```text
-ghcr.io/heijiji0527/card-service:latest
-ghcr.io/heijiji0527/card-service:1.1.2
+ghcr.io/quanquna0319/card-service:latest
+ghcr.io/quanquna0319/card-service:1.1.2
 ```
 
 拉取私有包前需要登录：
 
 ```bash
-echo "$GHCR_TOKEN" | docker login ghcr.io -u heijiji0527 --password-stdin
-docker pull ghcr.io/heijiji0527/card-service:latest
+echo "$GHCR_TOKEN" | docker login ghcr.io -u quanquna0319 --password-stdin
+docker pull ghcr.io/quanquna0319/card-service:latest
 ```
 
 ## 三、环境变量
@@ -70,8 +70,8 @@ docker pull ghcr.io/heijiji0527/card-service:latest
 | `CARD_HOST` | 否 | `0.0.0.0` | 容器内监听地址，镜像内固定为 `0.0.0.0` |
 | `CARD_PORT` | 否 | `8080` | 监听端口 |
 | `CARD_UPDATE_COMMAND` | 否 | 空 | 维护页“项目更新”在容器内执行的命令；为空时按 Git 仓库模式或提示手动升级 |
-| `CARD_UPDATE_REPO` | 否 | `heijiji0527/card-service` | 下载更新使用的 GitHub 仓库 |
-| `CARD_UPDATE_BRANCH` | 否 | `master` | 下载更新使用的分支 |
+| `CARD_UPDATE_REPO` | 否 | `quanquna0319/card-service` | 下载更新使用的 GitHub 仓库 |
+| `CARD_UPDATE_BRANCH` | 否 | `main` | 下载更新使用的分支 |
 | `CARD_UPDATE_INSTALL_DIR` | 否 | `/data/app` | 网页更新写入的程序目录，必须位于可写卷 |
 | `CARD_UPDATE_PACKAGE_DIR` | 否 | `<CARD_DB 所在目录>/update-packages` | 留存更新时从 GitHub 下载的源码包，维护页可下载或删除，最多保留 5 份 |
 | `GITHUB_TOKEN` | 否 | 空 | 私有仓库或 API 限流时使用的只读令牌 |
@@ -183,7 +183,7 @@ docker compose up -d
 
 # 回滚到指定镜像
 docker compose down
-docker run -d --name card-service ... ghcr.io/heijiji0527/card-service:1.1.2
+docker run -d --name card-service ... ghcr.io/quanquna0319/card-service:1.1.2
 ```
 
 升级前先按上一节备份数据库。数据库结构由服务启动时自动迁移，回滚镜像时如果结构已向前迁移，需要同时回滚数据库备份。

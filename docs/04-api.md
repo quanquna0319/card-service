@@ -160,8 +160,8 @@ curl -X POST http://127.0.0.1:8080/api/verify_card.php \
   "backup_dir": "/data/backups", "backups": [{"name":"cards-manual-….sqlite3","size":61440,"mtime":"…"}],
   "git": {"mode":"download","commit":"dc22c37","subject":"…","date":"…"},
   "update_mode": "download",
-  "update_repo": "heijiji0527/card-service",
-  "update_branch": "master",
+  "update_repo": "quanquna0319/card-service",
+  "update_branch": "main",
   "update_package_dir": "/data/update-packages",
   "update_packages": [{"name":"card-service-dc22c37.tar.gz","size":…}],
   "changelog": {"version":"1.1.2","date":"2026-10-19","entries":[…]}

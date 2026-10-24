@@ -8,8 +8,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     CARD_HOST=0.0.0.0 \
     CARD_PORT=8080 \
     CARD_UPDATE_MODE=auto \
-    CARD_UPDATE_REPO=heijiji0527/card-service \
-    CARD_UPDATE_BRANCH=master \
+    CARD_UPDATE_REPO=quanquna0319/card-service \
+    CARD_UPDATE_BRANCH=main \
     CARD_UPDATE_DIR=/data \
     CARD_UPDATE_INSTALL_DIR=/data/app
 

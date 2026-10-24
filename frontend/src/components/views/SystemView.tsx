@@ -580,8 +580,8 @@ export function SystemView() {
                 : updateMode === "download"
                   ? info?.git?.pendingRestart
                     ? `已下载 ${info?.git?.downloaded ?? "新版本"} · 重启服务后生效`
-                    : `${info?.update_repo ?? "heijiji0527/card-service"} · ${
-                        info?.update_branch ?? "master"
+                    : `${info?.update_repo ?? "quanquna0319/card-service"} · ${
+                        info?.update_branch ?? "main"
                       } · 直接从 GitHub 下载源码包`
                   : info?.git?.available
                 ? `${info.git.branch} · ${info.git.short} · ${

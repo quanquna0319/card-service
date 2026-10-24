@@ -114,7 +114,7 @@ curl -X POST http://127.0.0.1:8080/api/verify_card.php \
 镜像由 GitHub Actions 构建推送至 GHCR：
 
 ```text
-ghcr.io/heijiji0527/card-service:latest
+ghcr.io/quanquna0319/card-service:latest
 ```
 
 环境变量、HTTPS 反代、备份恢复、升级回滚与排障的完整说明见 [DEPLOY.md](DEPLOY.md) 与 [docs/05-deployment.md](docs/05-deployment.md)。

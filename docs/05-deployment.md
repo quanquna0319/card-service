@@ -33,8 +33,8 @@
 | --- | --- | --- |
 | `CARD_UPDATE_MODE` | `auto` | `auto` / `git` / `download` / `command` |
 | `CARD_UPDATE_COMMAND` | 空 | 设置后**优先执行**该命令，覆盖其他模式 |
-| `CARD_UPDATE_REPO` | `heijiji0527/card-service` | GitHub 仓库，`owner/name` |
-| `CARD_UPDATE_BRANCH` | `master` | 更新分支 |
+| `CARD_UPDATE_REPO` | `quanquna0319/card-service` | GitHub 仓库，`owner/name` |
+| `CARD_UPDATE_BRANCH` | `main` | 更新分支 |
 | `CARD_UPDATE_DIR` | 数据库同级 | 存放 `update-state.json` 的目录，Docker 内 `/data` |
 | `CARD_UPDATE_INSTALL_DIR` | 脚本目录 | 下载模式的代码安装目录，Docker 内 `/data/app` |
 | `CARD_UPDATE_PACKAGE_DIR` | `<UPDATE_DIR>/update-packages` | 留存源码包目录，只保留最近 5 份 |

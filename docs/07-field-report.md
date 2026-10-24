@@ -111,9 +111,15 @@
 ```
 
 > 📌 **变更说明（2026-10-24 更新）**
-> 上表为采集时的原值：该实例当时从上游 `heijiji0527/card-service` 的 `master` 分支更新。
-> 此后更新源已更正为 **`quanquna0319/card-service` 的 `main` 分支**（见 `docker-compose.yml` 的 `CARD_UPDATE_REPO` / `CARD_UPDATE_BRANCH`）。
-> 因此 `dc22c37` 这个提交在新仓库中不存在，切换后首次「检查更新」会显示远端有新提交，属预期行为。
+> 上表为采集时的原值：该实例当时从上游 `heijiji0527/card-service` 的 `master` 分支更新，镜像为 `ghcr.io/heijiji0527/card-service:latest`。
+>
+> 此后更新源已更正为 **`quanquna0319/card-service` 的 `main` 分支**，并已完成：
+> 1. `CARD_UPDATE_REPO` / `CARD_UPDATE_BRANCH` 写入 `.env` 与 `docker-compose.yml`（此前 compose 已删除这两项注入，容器一直在用镜像内置默认值）；
+> 2. 镜像切换为 `ghcr.io/quanquna0319/card-service:latest`（CI 构建，多架构，包可见性 public）；
+> 3. 容器重建后运行的是**镜像内** `/app/server.py`（新镜像 `.build-revision` 更新，entrypoint 自动仲裁回镜像代码），`/data/app` 旧副本不再被加载；
+> 4. 数据库零变化：98 张卡密（63 激活 / 34 未使用 / 1 禁用）、4 个账户，与切换前一致。
+>
+> 注意：`/data/update-state.json` 仍保留旧仓库的 `dc22c37` 记录（这是当时安装来源的真实历史），因此切换后首次「检查更新」会显示远端有新提交，属预期行为。
 
 **关键发现：这个实例是 download 模式更新的产物，而非纯镜像运行。**
 

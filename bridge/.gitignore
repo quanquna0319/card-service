@@ -1,8 +1,0 @@
-# 本地运行产物，不要提交
-carddata/
-cards.sqlite3
-cards.sqlite3-journal
-mitm_state.json
-backups/
-__pycache__/
-*.pyc

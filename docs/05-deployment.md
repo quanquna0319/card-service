@@ -92,7 +92,7 @@ CI 构建后推送至：
 
 ```
 ghcr.io/<owner>/card-service:latest     # 默认分支
-ghcr.io/<owner>/card-service:v1.1.2     # 语义化版本标签
+ghcr.io/<owner>/card-service:v1.2.0     # 语义化版本标签
 ```
 
 支持 `linux/amd64` 与 `linux/arm64`（ARM 服务器可直接拉取）。

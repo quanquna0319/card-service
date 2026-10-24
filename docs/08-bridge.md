@@ -1,4 +1,4 @@
-# bridge · 魔盒授权协议桥接
+# 08 · 魔盒授权协议桥接
 
 把本项目的卡密体系接到 **魔盒 3.1.0** 的私有协议上。
 
@@ -22,7 +22,7 @@
 
 ```bash
 # 1) 起服务（在仓库根目录）
-CARD_SECRET=你的密钥 python bridge/mitm_server.py \
+CARD_SECRET=你的密钥 python mitm_server.py \
   --port 8080 --host 0.0.0.0 \
   --card-service . \
   --card-db ./cards.sqlite3 \

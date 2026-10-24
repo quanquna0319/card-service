@@ -7,3 +7,9 @@ __pycache__/
 .venv/
 data/
 update-packages/
+
+# 桥接本地运行产物
+mitm_state.json
+carddata/
+backups/
+*.pyc

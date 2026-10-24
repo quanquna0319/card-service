@@ -1,5 +1,27 @@
 # 更新日志
 
+## 1.2.0 · 2026-10-25
+
+### 一、魔盒授权协议桥接
+
+1、新增 `mitm_server.py`：单进程同时提供魔盒客户端协议（`/card/sign`、`/card/active`、`/card/info`、`/feature/list`、`/launch/sign`、`/launch/check`、`/map/key`）与本项目原有的管理后台与 `/api/*`，卡密校验直接查 `cards.sqlite3`。
+
+2、卡密沿用原生 5 段格式（24 位）。接口回显的 `account` 取前 16 位载荷，以符合客户端 AES-128 密钥长度要求。
+
+3、校验码由 `HMAC(CARD_SECRET, 前 16 位载荷)` 确定性派生，因此输入被截断、去掉横杠或末段打错时仍能还原完整卡号完成校验。
+
+4、`app_id` 以卡记录为准：卡上已绑定则沿用它，只有新卡才用配置值，避免同一库里存在多套 `app_id` 时被误判为「卡密已绑定其他设备」。
+
+5、会话持久化到 `mitm_state.json`，服务重启后已激活状态不丢失。
+
+### 二、文档与工程
+
+1、新增 `docs/08-bridge.md`，记录协议映射、卡密格式转换、部署与排障。
+
+2、`.gitignore` 补充桥接的本地运行产物（`mitm_state.json`、`carddata/`、`backups/`、`*.pyc`）。
+
+3、前端版本号与 `package.json`、`package-lock.json` 同步至 1.2.0。
+
 ## 1.1.2 · 2026-10-19
 
 ### 一、历史备份删除

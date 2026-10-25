@@ -109,6 +109,22 @@ def file_sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def source_sha256() -> str:
+    """当前进程实际加载的这份源码的摘要。
+
+    更新会覆盖磁盘上的同名文件，事后算摘要只会得到新文件，
+    所以必须在导入时就把“这次加载的是哪份代码”记下来。
+    """
+    try:
+        return file_sha256(Path(__file__).resolve())
+    except OSError:
+        return ""
+
+
+# 进程启动时加载的源码摘要，用来区分“磁盘上是新代码”和“我跑的是新代码”。
+BOOT_SOURCE_SHA = source_sha256()
+
+
 def sqlite_summary(path: Path) -> dict:
     """读取任意 SQLite 文件的概览；恢复前用它决定是否允许覆盖当前库。"""
     conn = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
@@ -889,12 +905,12 @@ def installed_commit() -> dict:
                     and installed.get("commit")
                     and installed.get("commit") == data.get("commit")
                 )
-                if not applied and data.get("server_sha256"):
-                    # 标记文件丢了也能认出来：正在跑的 server.py 与下载时记录的摘要一致。
-                    try:
-                        applied = file_sha256(ROOT / entry_name()) == data["server_sha256"]
-                    except OSError:
-                        applied = False
+                if applied and data.get("server_sha256"):
+                    # 磁盘上的文件可能已经被这次更新覆盖，只能拿启动时加载的那份摘要比对。
+                    applied = BOOT_SOURCE_SHA == data["server_sha256"]
+                if applied and state_written_after_boot():
+                    # 状态是本次运行期间才写的：文件换了，但进程还在跑旧代码。
+                    applied = False
                 if applied:
                     # 当前执行的正是下载下来的副本，标记已生效。
                     previous = data.get("previous") or {}
@@ -1205,6 +1221,14 @@ def mark_boot_ok() -> None:
         (INSTALL_DIR / ".boot-attempts").unlink(missing_ok=True)
     except OSError:
         pass
+
+
+def state_written_after_boot() -> bool:
+    """状态文件是不是本进程启动之后才写的，也就是本次运行期间刚下载了新版本。"""
+    try:
+        return UPDATE_STATE_FILE.stat().st_mtime > STARTED_AT + 1
+    except OSError:
+        return False
 
 
 def running_from_install() -> bool:

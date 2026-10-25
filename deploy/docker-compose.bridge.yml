@@ -1,0 +1,58 @@
+# 桥接入口部署：同一个进程同时提供魔盒客户端协议与管理后台。
+# 用法：docker compose -f deploy/docker-compose.bridge.yml up -d
+#
+# 关于更新：网页一键更新把新代码写进数据卷 /data/app，启动脚本发现副本可用时
+# 会把入口脚本与 --card-service 一起指到 /data/app，重启即生效；
+# 副本缺失时自动回退镜像内的 /app，不需要额外挂载宿主机文件。
+services:
+  card-service:
+    image: ghcr.io/quanquna0319/card-service:latest
+    container_name: card-service
+    restart: unless-stopped
+    ports:
+      - 48192:8080
+    environment:
+      CARD_SECRET: "${CARD_SECRET:?set CARD_SECRET in .env}"
+      CARD_APP_ID: "${CARD_APP_ID:-APP_ID}"
+      CARD_ADMIN_USER: "${CARD_ADMIN_USER:-admin}"
+      CARD_ADMIN_PASSWORD: "${CARD_ADMIN_PASSWORD:?set CARD_ADMIN_PASSWORD in .env}"
+      CARD_HOST: "0.0.0.0"
+      CARD_PORT: "8080"
+      CARD_DB: "/data/cards.sqlite3"
+      CARD_UPDATE_REPO: "${CARD_UPDATE_REPO:-quanquna0319/card-service}"
+      CARD_UPDATE_BRANCH: "${CARD_UPDATE_BRANCH:-main}"
+      CARD_UPDATE_MODE: "${CARD_UPDATE_MODE:-auto}"
+      CARD_UPDATE_DIR: "/data"
+      CARD_UPDATE_INSTALL_DIR: "/data/app"
+      PYTHONDONTWRITEBYTECODE: "1"
+      TZ: "${TZ:-Asia/Shanghai}"
+    command:
+      - "python"
+      - "/app/mitm_server.py"
+      - "--port"
+      - "8080"
+      - "--host"
+      - "0.0.0.0"
+      - "--card-service"
+      - "/app"
+      - "--card-db"
+      - "/data/cards.sqlite3"
+      - "--state"
+      - "/data/mitm_state.json"
+    volumes:
+      - ./data:/data
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test:
+        - "CMD"
+        - "python"
+        - "-c"
+        - "import os,urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health', timeout=2)"
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3

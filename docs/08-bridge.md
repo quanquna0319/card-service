@@ -87,6 +87,12 @@ check = base32( hmac_sha256(CARD_SECRET, 前16位载荷)[:3] )[:4]
 
 环境变量 `CARD_SECRET` / `CARD_DB` / `CARD_APP_ID` 同样生效。
 
+### Docker 与一键更新
+
+桥接镜像部署用 `deploy/docker-compose.bridge.yml`，镜像内已经带了 `/app/mitm_server.py`，不需要再把宿主机的 `mitm_server.py` 挂进容器。
+
+网页「项目更新」把新代码写进数据卷 `/data/app` 后，启动脚本会把入口脚本和 `--card-service` 一并指到 `/data/app`，所以桥接和控制台会一起生效；副本缺失或无法编译时自动回退 `/app`。
+
 ## 接口映射
 
 | 魔盒端点 | 行为 |

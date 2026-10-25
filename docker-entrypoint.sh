@@ -95,6 +95,7 @@ if [ "$use_install" = "1" ] && [ "$#" -ge 1 ]; then
     IFS='
 '
     rebuilt=""
+    prev=""
     for arg in "$@"; do
       case "$arg" in
         *.py)
@@ -102,7 +103,19 @@ if [ "$use_install" = "1" ] && [ "$#" -ge 1 ]; then
             arg="$INSTALL_DIR/$entry"
           fi
           ;;
+        --card-service=*)
+          # 桥接用 --card-service 指定控制台目录，同样要跟着副本走。
+          if [ -f "$INSTALL_DIR/server.py" ]; then
+            arg="--card-service=$INSTALL_DIR"
+          fi
+          ;;
+        *)
+          if [ "$prev" = "--card-service" ] && [ -f "$INSTALL_DIR/server.py" ]; then
+            arg="$INSTALL_DIR"
+          fi
+          ;;
       esac
+      prev="$arg"
       rebuilt="$rebuilt$arg
 "
     done

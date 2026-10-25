@@ -22,6 +22,7 @@ RUN groupadd --system --gid 10001 app \
     && printf '%s\n' "$CARD_BUILD_REVISION" > /app/.build-revision
 
 COPY server.py /app/server.py
+COPY mitm_server.py /app/mitm_server.py
 COPY static /app/static
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 

@@ -290,14 +290,17 @@ export function SystemView() {
   }, [load]);
 
   const waitForRestart = useCallback(
-    async (beforePid: number | undefined) => {
+    async (before: { pid?: number; boot?: string } | undefined) => {
       const deadline = Date.now() + 45_000;
       while (Date.now() < deadline) {
         await new Promise((resolve) => setTimeout(resolve, 1200));
         try {
           const health = await api.health();
           const pid = (health as { pid?: number }).pid;
-          if (!beforePid || pid !== beforePid) {
+          const boot = (health as { boot?: string }).boot;
+          // 容器里的 1 号进程重启后 PID 仍是 1，只有启动标识变化才说明真的换进程了。
+          const changed = before?.boot ? boot !== before.boot : !before?.pid || pid !== before.pid;
+          if (!before || changed) {
             await load();
             return true;
           }
@@ -337,14 +340,14 @@ export function SystemView() {
     if (updating) return;
     setUpdating(true);
     setUpdateOpen(false);
-    const pid = info?.pid;
+    const before = { pid: info?.pid, boot: info?.boot };
     try {
       const result = await api.updateProject(restartAfterUpdate);
       if (!result.updated) {
         if (result.restart_required) {
           toast.message("新版本已下载，重启服务后生效");
           if (restartAfterUpdate) {
-            const ok = await waitForRestart(pid);
+            const ok = await waitForRestart(before);
             if (ok) {
               toast.success("服务已重新上线");
             } else {
@@ -371,7 +374,7 @@ export function SystemView() {
       );
       if (restartAfterUpdate) {
         toast.message("正在重启服务并重新加载新版本…");
-        const ok = await waitForRestart(pid);
+        const ok = await waitForRestart(before);
         if (ok) {
           toast.success("服务已重新上线");
         } else {
@@ -386,7 +389,7 @@ export function SystemView() {
     } finally {
       setUpdating(false);
     }
-  }, [info?.pid, load, restartAfterUpdate, updating, waitForRestart]);
+  }, [info?.pid, info?.boot, load, restartAfterUpdate, updating, waitForRestart]);
 
   const openChangelog = useCallback(async () => {
     setChangelogOpen(true);
@@ -544,7 +547,7 @@ export function SystemView() {
               服务重启
             </Card.Title>
             <Card.Description>
-              恢复备份后数据立即生效，重启用于清空会话或加载新代码；进程退出后由启动脚本或容器策略拉起。
+              恢复备份后数据立即生效；重启会原地换成最新代码并清空会话，不依赖外部守护进程拉起。
             </Card.Description>
           </Card.Header>
           <Card.Content className="space-y-4">
@@ -561,7 +564,7 @@ export function SystemView() {
               重启服务
             </Button>
             <p className="text-[11.5px] text-[var(--muted)]">
-              如果由 <span className="mono">python server.py</span> 直接前台运行，重启后不会自动拉起，需要重新执行启动命令。
+              重启在进程内完成，前台运行 <span className="mono">python server.py</span> 也能直接加载新代码，不会掉线。
             </p>
           </Card.Content>
         </Card>
@@ -969,7 +972,7 @@ export function SystemView() {
                   <span>
                     更新完成后自动重启服务
                     <span className="block text-[11px] text-[var(--muted)]">
-                      依赖进程管理器自动拉起；直接前台运行 python server.py 时不会被拉起。
+                      重启会直接加载刚下载的代码，前台运行 python server.py 时同样生效。
                     </span>
                   </span>
                 </label>

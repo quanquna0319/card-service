@@ -66,7 +66,12 @@ export interface ChangelogInfo {
 
 export interface SystemInfo {
   pid: number;
+  boot?: string;
   uptime: number;
+  copy?: "install" | "image" | "git" | string;
+  entry?: string;
+  install_dir?: string;
+  install_ready?: boolean;
   db: string;
   db_size: number;
   db_sha256: string;

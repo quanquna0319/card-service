@@ -13,6 +13,7 @@ import secrets
 import shutil
 import sqlite3
 import subprocess
+import sys
 import tarfile
 import threading
 import time
@@ -39,6 +40,8 @@ MAX_PASSWORD_LENGTH = 256
 LOCK = threading.RLock()
 SESSIONS: dict[str, tuple[int, float]] = {}
 STARTED_AT = time.time()
+# 每次启动换一个值：容器里 PID 恒为 1，只能靠它判断“真的重启过了”。
+BOOT_ID = secrets.token_hex(8)
 MAX_BACKUP_BYTES = 32 * 1024 * 1024
 BACKUP_DIR = Path(os.environ.get("CARD_BACKUP_DIR", DB_PATH.parent / "backups"))
 SERVER_PID = os.getpid()
@@ -582,8 +585,17 @@ def check_update() -> dict:
         }
         payload["updated"] = bool(remote["sha"]) and local.get("short") != remote["short"]
         payload["behind"] = 1 if payload["updated"] else 0
-        if payload["pendingRestart"]:
-            payload["note"] = f"已下载 {local.get('downloaded') or remote['short']}，重启服务后生效。"
+        if payload["pendingRestart"] and not install_ready():
+            # 副本不完整时“重启后生效”是句空话，直接说清楚是哪里缺了。
+            payload["note"] = (
+                f"已下载 {local.get('downloaded') or remote['short']}，"
+                "但数据卷里的副本没能启动或无法编译，已回退到当前运行代码；"
+                "请重新下载更新后再试。"
+            )
+        elif payload["pendingRestart"]:
+            payload["note"] = (
+                f"已下载 {local.get('downloaded') or remote['short']}，重启服务后生效。"
+            )
         elif payload["updated"]:
             payload["note"] = "点击“更新到最新版本”会下载这份源码包，重启后生效。"
         else:
@@ -736,11 +748,35 @@ def download_update() -> dict:
 
         with UPDATE_LOCK:
             INSTALL_DIR.mkdir(parents=True, exist_ok=True)
-            install_file(source / "server.py", INSTALL_DIR / "server.py")
+            # 根目录下的入口脚本全部安装：1.2.0 起多了 mitm_server.py，
+            # 只覆盖 server.py 会让桥接部署拿不到新文件。
+            scripts = [item for item in sorted(source.glob("*.py")) if item.is_file()]
+            if not any(item.name == "server.py" for item in scripts):
+                raise ValueError("更新包缺少 server.py")
+            previous_dir = UPDATE_DIR / ".install-previous"
+            shutil.rmtree(previous_dir, ignore_errors=True)
+            previous_dir.mkdir(parents=True, exist_ok=True)
+            for item in scripts:
+                current = INSTALL_DIR / item.name
+                if current.is_file():
+                    shutil.copy2(current, previous_dir / item.name)
+            for item in scripts:
+                install_file(item, INSTALL_DIR / item.name)
             install_tree(source / "static", INSTALL_DIR / "static")
             # 更新日志随源码包一起安装，页面上的“查看更新日志”才能看到新版本。
             if (source / "CHANGELOG.md").is_file():
                 install_file(source / "CHANGELOG.md", INSTALL_DIR / "CHANGELOG.md")
+            if not compile_ok(INSTALL_DIR / "server.py"):
+                # 装上去的代码根本跑不起来时立刻回滚，别让下一次重启直接离线。
+                for item in previous_dir.glob("*.py"):
+                    install_file(item, INSTALL_DIR / item.name)
+                raise ValueError("更新包里的 server.py 无法编译，已回滚到上一版")
+            # 重新下载意味着再给这份副本一次启动机会。
+            for flag in (".install-disabled", ".boot-attempts"):
+                try:
+                    (INSTALL_DIR / flag).unlink(missing_ok=True)
+                except OSError:
+                    pass
             marker = json.dumps(
                 {
                     "available": True,
@@ -753,6 +789,8 @@ def download_update() -> dict:
                     "dirty": False,
                     "previous": local,
                     "package": package.get("name", ""),
+                    "entry": entry_name(),
+                    "server_sha256": file_sha256(INSTALL_DIR / "server.py"),
                     "pendingRestart": True,
                 },
                 ensure_ascii=False,
@@ -825,11 +863,11 @@ def install_tree(source: Path, target: Path) -> None:
 
 
 def installed_commit() -> dict:
-    running_from_install = ROOT.resolve() == INSTALL_DIR.resolve()
+    from_install = running_from_install()
     state = read_update_state()
     pending_info: dict = {}
     if (
-        not running_from_install
+        not from_install
         and state.get("pendingRestart")
         and state.get("short")
     ):
@@ -837,7 +875,7 @@ def installed_commit() -> dict:
             "pendingRestart": True,
             "downloaded": state.get("short"),
         }
-    if running_from_install and UPDATE_STATE_FILE.is_file():
+    if from_install and UPDATE_STATE_FILE.is_file():
         data = state
         if data.get("short"):
             if data.get("pendingRestart"):
@@ -846,11 +884,18 @@ def installed_commit() -> dict:
                     installed = json.loads(source.read_text(encoding="utf-8"))
                 except (OSError, ValueError):
                     installed = {}
-                if (
+                applied = bool(
                     isinstance(installed, dict)
                     and installed.get("commit")
                     and installed.get("commit") == data.get("commit")
-                ):
+                )
+                if not applied and data.get("server_sha256"):
+                    # 标记文件丢了也能认出来：正在跑的 server.py 与下载时记录的摘要一致。
+                    try:
+                        applied = file_sha256(ROOT / entry_name()) == data["server_sha256"]
+                    except OSError:
+                        applied = False
+                if applied:
                     # 当前执行的正是下载下来的副本，标记已生效。
                     previous = data.get("previous") or {}
                     data.pop("pendingRestart", None)
@@ -872,7 +917,7 @@ def installed_commit() -> dict:
                         "downloaded": data.get("short"),
                     }
             return data
-    if running_from_install:
+    if from_install:
         marker = ROOT / ".install-source.json"
         if marker.is_file():
             try:
@@ -882,7 +927,7 @@ def installed_commit() -> dict:
             if isinstance(meta, dict) and meta.get("short"):
                 return {**meta, "available": True}
     revision = ROOT / ".build-revision"
-    if not running_from_install and revision.is_file():
+    if not from_install and revision.is_file():
         try:
             sha = revision.read_text(encoding="utf-8").strip()
         except OSError:
@@ -1125,11 +1170,119 @@ def session_user(token: str | None) -> sqlite3.Row | None:
         return conn.execute("SELECT * FROM users WHERE id=? AND disabled=0", (item[0],)).fetchone()
 
 
+def entry_name() -> str:
+    """当前进程的入口脚本名（server.py / mitm_server.py）。"""
+    name = Path(sys.argv[0] or "").name
+    return name if name.endswith(".py") else "server.py"
+
+
+def compile_ok(path: Path) -> bool:
+    """不落盘地检查一份源码能否编译，挡住语法错误的新版本。"""
+    try:
+        compile(path.read_bytes(), str(path), "exec")
+    except (OSError, SyntaxError, ValueError):
+        return False
+    return True
+
+
+def install_ready(script: str | None = None) -> bool:
+    """数据卷里的副本是否完整可用：入口脚本能编译，前端入口也在。"""
+    if (INSTALL_DIR / ".install-disabled").is_file():
+        # 连续启动失败过的副本不再自动使用，避免把服务锁死在起不来的版本上。
+        return False
+    name = script or entry_name()
+    target = INSTALL_DIR / name
+    return (
+        target.is_file()
+        and (INSTALL_DIR / "static" / "index.html").is_file()
+        and compile_ok(target)
+    )
+
+
+def mark_boot_ok() -> None:
+    """端口起来了就算这次启动成功，清掉启动脚本记的失败次数。"""
+    try:
+        (INSTALL_DIR / ".boot-attempts").unlink(missing_ok=True)
+    except OSError:
+        pass
+
+
+def running_from_install() -> bool:
+    try:
+        return ROOT.resolve() == INSTALL_DIR.resolve()
+    except OSError:
+        return False
+
+
+def copy_kind() -> str:
+    """当前进程跑的是哪份代码，用来解释“重启为什么没生效”。"""
+    if running_from_install():
+        return "install"
+    return "git" if (ROOT / ".git").exists() else "image"
+
+
+def exec_new_process(script: Path) -> bool:
+    """用指定脚本原地替换当前进程；成功不返回，失败返回 False。
+
+    不依赖 systemd / docker 的拉起策略：即使裸跑 `python server.py`，
+    也能在更新后自己换成新代码，避免“重启了还是旧版本”。
+    """
+    # 新老副本的 ROOT 往往不同，必须把绝对路径固定下来，否则数据库会换位置。
+    os.environ["CARD_DB"] = str(DB_PATH)
+    os.environ["CARD_BACKUP_DIR"] = str(BACKUP_DIR)
+    os.environ["CARD_UPDATE_DIR"] = str(UPDATE_DIR)
+    os.environ["CARD_UPDATE_INSTALL_DIR"] = str(INSTALL_DIR)
+    os.environ["CARD_UPDATE_PACKAGE_DIR"] = str(UPDATE_PACKAGE_DIR)
+    argv = [sys.executable, str(script), *sys.argv[1:]]
+    try:
+        sys.stdout.flush()
+        sys.stderr.flush()
+    except (OSError, ValueError):
+        pass
+    try:
+        os.execv(sys.executable, argv)
+    except OSError as exc:
+        print(f"切换到 {script} 失败：{exc}", file=sys.stderr)
+        return False
+    return True
+
+
+def switch_to_installed_copy() -> None:
+    """镜像副本启动时，若数据卷里有已下载的更新，直接换成更新的副本。
+
+    启动脚本的 CMD 匹配只覆盖 `python /app/server.py` 一种写法；
+    `python3`、带 `-u`、自定义 command 或桥接入口都会绕过它，
+    这里在进程内再兜一次，保证“重启即生效”。
+    """
+    if running_from_install():
+        return
+    state = read_update_state()
+    if not state.get("pendingRestart"):
+        return
+    script = INSTALL_DIR / entry_name()
+    if not install_ready():
+        print(
+            f"数据卷里的更新副本不可用（{script} 缺失或无法编译），继续使用当前代码",
+            file=sys.stderr,
+        )
+        return
+    print(f"检测到已下载的更新 {state.get('short', '')}，切换到 {script}")
+    if not exec_new_process(script):
+        print("切换失败，继续使用当前代码", file=sys.stderr)
+
+
 def schedule_restart(delay: float = 1.0) -> None:
-    """先响应客户端，再退出进程；由 systemd / docker / 启动脚本负责拉起。"""
+    """先响应客户端，再换成最新代码重新执行；换不动才退出等守护进程拉起。"""
 
     def worker() -> None:
         time.sleep(delay)
+        target: Path | None = None
+        if install_ready():
+            target = INSTALL_DIR / entry_name()
+        elif (ROOT / entry_name()).is_file():
+            target = ROOT / entry_name()
+        if target is not None and exec_new_process(target):
+            return
         os._exit(0)
 
     threading.Thread(target=worker, daemon=True).start()
@@ -1220,6 +1373,7 @@ class Handler(BaseHTTPRequestHandler):
                     "success",
                     service="local-card-service",
                     pid=SERVER_PID,
+                    boot=BOOT_ID,
                     uptime=int(time.time() - STARTED_AT),
                     db=str(DB_PATH),
                 ),
@@ -1234,6 +1388,7 @@ class Handler(BaseHTTPRequestHandler):
                 response(
                     "success",
                     pid=SERVER_PID,
+                    boot=BOOT_ID,
                     uptime=int(time.time() - STARTED_AT),
                     db=str(DB_PATH),
                     db_size=DB_PATH.stat().st_size if DB_PATH.exists() else 0,
@@ -1241,6 +1396,10 @@ class Handler(BaseHTTPRequestHandler):
                     backup_dir=str(BACKUP_DIR),
                     backups=list_backups(),
                     git=installed_commit(),
+                    copy=copy_kind(),
+                    entry=entry_name(),
+                    install_dir=str(INSTALL_DIR),
+                    install_ready=install_ready(),
                     update_mode=update_mode(),
                     update_repo=UPDATE_REPO,
                     update_branch=UPDATE_BRANCH,
@@ -1702,6 +1861,10 @@ class Handler(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
+    # 启动脚本没换到数据卷副本时（自定义 CMD / python3 / 桥接入口），这里补一切换。
+    switch_to_installed_copy()
     init_db()
+    server = ThreadingHTTPServer((HOST, PORT), Handler)
+    mark_boot_ok()
     print(f"Card service listening on http://{HOST}:{PORT}")
-    ThreadingHTTPServer((HOST, PORT), Handler).serve_forever()
+    server.serve_forever()

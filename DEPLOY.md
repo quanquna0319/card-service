@@ -136,7 +136,7 @@ server {
 
 2、上传恢复：只接受包含 `cards` 与 `users` 表、且 `integrity_check` 通过的 SQLite 文件；覆盖前自动保存一份安全备份，再用原子替换换入。
 
-3、重启服务：接口返回后进程退出，由 systemd 或容器策略拉起。页面会自动轮询 `/health`，进程号变化即视为重启成功。
+3、重启服务：接口返回后进程用 `os.execv` 原地换成最新代码重启，不依赖外部拉起；页面轮询 `/health`，启动标识（`boot`）变化即视为重启成功。容器里 PID 恒为 1，因此不再用进程号判断。
 
 相关接口（均要求管理员令牌）：
 
@@ -150,7 +150,7 @@ POST /api/restart
 
 备份目录默认是数据库同级的 `backups/`，可用 `CARD_BACKUP_DIR` 覆盖，默认保留最近 20 份。
 
-重启依赖进程管理器。systemd 单元必须使用 `Restart=always`，因为网页重启以退出码 0 结束进程；`Restart=on-failure` 不会拉起。仓库内 `deploy/card-service.service` 已按此配置。
+重启不再依赖进程管理器：服务直接用 `os.execv` 换成最新代码重新执行，前台运行 `python server.py` 也不会掉线。若 `execv` 失败（例如解释器被替换），才退回“退出进程 + 由 systemd / 容器拉起”的老路径，此时 systemd 单元仍需 `Restart=always`（仓库内 `deploy/card-service.service` 已按此配置）。
 
 不使用管理台时，也可以走命令行。数据库是单个 SQLite 文件，备份前先停写：
 

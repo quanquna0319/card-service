@@ -2,7 +2,7 @@
 
 **自持卡密验证服务 + 浏览器管理后台** — 一个 Python 进程 + 一个 SQLite 文件，即可完整承载卡密签发、验证、设备绑定与运维。
 
-当前版本：**v1.2.0** · 更新记录见 [CHANGELOG.md](CHANGELOG.md)
+当前版本：**v1.2.4** · 更新记录见 [CHANGELOG.md](CHANGELOG.md)
 
 ---
 

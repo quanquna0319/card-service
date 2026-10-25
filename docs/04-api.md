@@ -164,7 +164,7 @@ curl -X POST http://127.0.0.1:8080/api/verify_card.php \
   "update_branch": "main",
   "update_package_dir": "/data/update-packages",
   "update_packages": [{"name":"card-service-dc22c37.tar.gz","size":…}],
-  "changelog": {"version":"1.2.0","date":"2026-10-25","entries":[…]}
+  "changelog": {"version":"1.2.4","date":"2026-10-25","entries":[…]}
 }}
 ```
 

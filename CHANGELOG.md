@@ -1,5 +1,19 @@
 # 更新日志
 
+## 1.2.4 · 2026-10-25
+
+### 一、修正版本号各处不同步
+
+1、1.2.1～1.2.3 三次修改只动了 `CHANGELOG.md` 和 `frontend/package.json`，README、`docs/`、`DEPLOY.md` 里的版本号一直停在 1.2.0，导致仓库首页显示的版本与实际代码不一致。
+
+2、已把 README、`docs/01-overview.md`、`docs/04-api.md`、`docs/05-deployment.md`、`DEPLOY.md` 全部对齐到当前版本。
+
+3、新增 `scripts/check-version.py`：以 `CHANGELOG.md` 第一段 `## <version>` 为唯一事实来源，比对其余所有声明处；不一致时退出码 1，加 `--fix` 可自动改写。
+
+### 二、澄清镜像标签
+
+`DEPLOY.md` 原先写「推 main 后产生 `:1.2.0` 标签」并不成立——CI 只在推 `v*` 时生成语义化标签，只推 `main` 时镜像只有 `latest` 与 `main`。文档已按实际行为改写。
+
 ## 1.2.3 · 2026-10-25
 
 ### 一、修正“下载完就显示已是最新”

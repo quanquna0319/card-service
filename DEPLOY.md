@@ -48,8 +48,11 @@ docker run -d --name card-service \
 
 ```text
 ghcr.io/quanquna0319/card-service:latest
-ghcr.io/quanquna0319/card-service:1.2.0
+ghcr.io/quanquna0319/card-service:main
+ghcr.io/quanquna0319/card-service:1.2.4   # 仅在打 v1.2.4 标签时产生
 ```
+
+> 只有打 `v*` 标签才会生成语义化版本 tag；只推 `main` 时镜像只有 `latest` 和 `main` 两个标签。
 
 拉取私有包前需要登录：
 
@@ -183,7 +186,7 @@ docker compose up -d
 
 # 回滚到指定镜像
 docker compose down
-docker run -d --name card-service ... ghcr.io/quanquna0319/card-service:1.2.0
+docker run -d --name card-service ... ghcr.io/quanquna0319/card-service:1.2.4
 ```
 
 升级前先按上一节备份数据库。数据库结构由服务启动时自动迁移，回滚镜像时如果结构已向前迁移，需要同时回滚数据库备份。
